@@ -7,7 +7,54 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-	// write your code here
+//        ptsTiming();
+//
+//        try {
+//            fetchVideos(new File("/home/zolotar/solo/bg_video_15"), new File("/home/zolotar/solo/bg_video_15/files.txt"));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        String ffmpegCommand = "ffmpeg -i %s -t 10 -vf scale=w=512:h=512 -c:v libx264 -an cropped/%s.mp4";
+        try {
+            writeFFmpegCommand("/home/zolotar/solo/bg_video_15/files.txt", "/home/zolotar/solo/bg_video_15/ffmpeg.txt", ffmpegCommand);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void writeFFmpegCommand(String fileList, String outFIleList, String ffmpegCommand) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(fileList));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outFIleList));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            writer.write(String.format(ffmpegCommand, line, getFileNameWithoutExt(line)));
+            writer.write("\n");
+        }
+        writer.flush();
+        writer.close();
+        reader.close();
+    }
+    private static String getFileNameWithoutExt(String fileName) {
+        System.out.println("FILE: " + fileName);
+        return fileName.substring(0, fileName.indexOf("."));
+    }
+
+    private static void fetchVideos(File directory, File outputFile) throws IOException {
+        if (directory.isDirectory()) {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+            File[] files = directory.listFiles();
+            for (File file : files) {
+//                writer.write(getFileNameWithoutExt(file.getName()));
+                writer.write(file.getName());
+                writer.write("\n");
+            }
+            writer.flush();
+            writer.close();
+        }
+    }
+
+    private static void ptsTiming() {
+        // write your code here
         List<Long> recordedPTS = readPTS(new File("/home/zolotar/solo/recordedPTS.txt"));
 //        for (int i = 0; i < recordedPTS.size(); i++) {
 //            long value = recordedPTS.get(i);
