@@ -2,7 +2,9 @@ package com.company;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
 
@@ -14,12 +16,89 @@ public class Main {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-        String ffmpegCommand = "ffmpeg -i %s -t 10 -vf scale=w=512:h=512 -c:v libx264 -an cropped/%s.mp4";
+//        String ffmpegCommand = "ffmpeg -i %s -t 10 -vf scale=w=512:h=512 -c:v libx264 -an cropped/%s.mp4";
+//        try {
+//            writeFFmpegCommand("/home/zolotar/solo/bg_video_15/files.txt", "/home/zolotar/solo/bg_video_15/ffmpeg.txt", ffmpegCommand);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        try {
+//            Map<String, String> translationRus = generateStringsMap("/home/zolotar/solo/translation/strings-rus.xml");
+//            for(Map.Entry<String, String> pair : translationRus.entrySet()) {
+//                System.out.printf("key %40s value %20s\n", pair.getKey(), pair.getValue());
+//            }
+//            System.out.println("size: " + translationRus.size());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+       File sourceDir = new File("/home/zolotar/solo/translation");
+        for (File file : sourceDir.listFiles()) {
+            refactorTranslationFile(file.getAbsolutePath(),
+                    "/home/zolotar/solo/translation/refactored/" + file.getName(),
+                    "/home/zolotar/solo/translation/refactored/strings.xml");
+        }
+    }
+
+    private static void refactorTranslationFile(String source, String dest, String pattern){
+
         try {
-            writeFFmpegCommand("/home/zolotar/solo/bg_video_15/files.txt", "/home/zolotar/solo/bg_video_15/ffmpeg.txt", ffmpegCommand);
+            Map<String, String> translationMap = generateStringsMap(source);
+//            for(Map.Entry<String, String> pair : translationRus.entrySet()) {
+//                System.out.printf("key %40s value %20s\n", pair.getKey(), pair.getValue());
+//            }
+//            System.out.println("size: " + translationRus.size());
+            BufferedReader reader = new BufferedReader(new FileReader(pattern));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(dest));
+            String line;
+            String key;
+            String value;
+            String keyStart = "name=\"";
+            String keyEnd = "\">";
+            String valueStart = "\">";
+            String valueEnd = "</string>";
+            while ((line = reader.readLine()) != null) {
+                try {
+                    key = line.substring(line.indexOf(keyStart) + keyStart.length(), line.indexOf(keyEnd));
+                    value = line.substring(line.indexOf(valueStart) + valueStart.length(), line.indexOf(valueEnd));
+                    if (translationMap.containsKey(key)) {
+                        line = line.replace(value, translationMap.get(key));
+                    }
+                } catch (Exception e) {
+                    System.out.println("error with line: " + line);
+                } finally {
+                    writer.write(line + "\n");
+                }
+            }
+            reader.close();
+            writer.flush();
+            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static Map<String, String> generateStringsMap(String fileName) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        Map<String, String> translationMap = new HashMap<>();
+        String line;
+        String key;
+        String value;
+        String keyStart = "name=\"";
+        String keyEnd = "\">";
+        String valueStart = "\">";
+        String valueEnd = "</string>";
+        while ((line = reader.readLine()) != null) {
+            try {
+                key = line.substring(line.indexOf(keyStart) + keyStart.length(), line.indexOf(keyEnd));
+                value = line.substring(line.indexOf(valueStart) + valueStart.length(), line.indexOf(valueEnd));
+                translationMap.put(key, value);
+            } catch (Exception e) {
+                System.out.println("error with line: " + line);
+            }
+        }
+        reader.close();
+        return translationMap;
     }
 
     private static void writeFFmpegCommand(String fileList, String outFIleList, String ffmpegCommand) throws IOException {
